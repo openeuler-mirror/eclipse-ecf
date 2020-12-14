@@ -5,12 +5,13 @@
 %bcond_with bootstrap
 Name:                eclipse-ecf
 Version:             3.14.4
-Release:             1
+Release:             2
 Summary:             Eclipse Communication Framework (ECF) Eclipse plug-in
 License:             EPL-1.0 and ASL 2.0
 URL:                 http://www.eclipse.org/ecf/
 Source0:             http://git.eclipse.org/c/ecf/org.eclipse.ecf.git/snapshot/org.eclipse.ecf-%{git_tag}.tar.xz
 Patch0:              eclipse-ecf-feature-deps.patch
+Patch1:              CVE-2014-0363.patch
 BuildRequires:       tycho tycho-extras maven-plugin-build-helper eclipse-license osgi-annotation
 BuildRequires:       xpp3-minimal httpcomponents-client httpcomponents-core apache-commons-codec
 BuildRequires:       apache-commons-logging
@@ -52,6 +53,7 @@ Documentation and developer resources for the Eclipse Communication Framework
 find . -type f -name "*.jar" -exec rm {} \;
 find . -type f -name "*.class" -exec rm {} \;
 %patch0
+%patch1 -p1
 %pom_xpath_remove "feature/plugin[@id='org.eclipse.ecf.presence']" releng/features/org.eclipse.ecf.core/feature.xml
 sed -i -e '/org.objectweb.asm/s/7/8/' protocols/bundles/ch.ethz.iks.r_osgi.remote/META-INF/MANIFEST.MF
 sed -i -e '/<module>examples/d' -e '/<module>tests/d' pom.xml
@@ -188,5 +190,8 @@ popd
 %endif
 
 %changelog
+* Sat Dec 12 2020 caodongxia <caodongxia@huawei.com> - 3.14.4-2
+- Fix CVE-2014-0363.patch
+
 * Thu Aug 27 2020 yanan li <liyanan032@huawei.com> - 3.14.4-1
 - Package init
