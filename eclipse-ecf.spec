@@ -1,11 +1,10 @@
 %global _eclipsedir %{_prefix}/lib/eclipse
 %global __requires_exclude .*org\.eclipse\.equinox.*
 %global git_tag 5d501929b628b6aa6d28b2f5df73fc45c0fa1945
-%bcond_without providers
 %bcond_with bootstrap
 Name:                eclipse-ecf
 Version:             3.14.4
-Release:             2
+Release:             3
 Summary:             Eclipse Communication Framework (ECF) Eclipse plug-in
 License:             EPL-1.0 and ASL 2.0
 URL:                 http://www.eclipse.org/ecf/
@@ -17,9 +16,6 @@ BuildRequires:       xpp3-minimal httpcomponents-client httpcomponents-core apac
 BuildRequires:       apache-commons-logging
 %if %{without bootstrap}
 BuildRequires:       eclipse-emf-runtime eclipse-pde
-%if %{with providers}
-BuildRequires:       dnsjava irclib
-%endif
 %endif
 BuildArch:           noarch
 %description
@@ -79,7 +75,6 @@ sed -i -e '/<module>examples/d' -e '/<module>tests/d' pom.xml
 %pom_disable_module providers/bundles/org.eclipse.ecf.provider.jslp
 %pom_disable_module protocols/bundles/ch.ethz.iks.slp
 %pom_xpath_remove "feature/includes[@id='org.eclipse.ecf.discovery.slp.feature']" releng/features/org.eclipse.ecf.remoteservice.sdk.feature/feature.xml
-%if %{without providers}
 %pom_disable_module releng/features/org.eclipse.ecf.discovery.dnssd.feature
 %pom_disable_module providers/bundles/org.eclipse.ecf.provider.dnssd
 %pom_disable_module protocols/bundles/org.jivesoftware.smack
@@ -93,14 +88,7 @@ sed -i -e '/<module>examples/d' -e '/<module>tests/d' pom.xml
 %pom_disable_module providers/bundles/org.eclipse.ecf.provider.irc.ui
 %pom_xpath_remove "feature/plugin[@id='org.eclipse.ecf.provider.irc']" releng/features/org.eclipse.ecf.core/feature.xml
 %pom_xpath_remove "feature/plugin[@id='org.eclipse.ecf.provider.irc.ui']" releng/features/org.eclipse.ecf.core/feature.xml
-%endif
 ln -s $(build-classpath osgi-annotation) osgi/bundles/org.eclipse.osgi.services.remoteserviceadmin/osgi/osgi.annotation.jar
-%if %{with providers}
-ln -s $(build-classpath xpp3-minimal) protocols/bundles/org.jivesoftware.smack/jars/xpp.jar
-echo "Eclipse-BundleShape: dir" >> protocols/bundles/org.jivesoftware.smack/META-INF/MANIFEST.MF
-ln -s $(build-classpath irclib) providers/bundles/org.eclipse.ecf.provider.irc/lib/irclib.jar
-echo "Eclipse-BundleShape: dir" >> providers/bundles/org.eclipse.ecf.provider.irc/META-INF/MANIFEST.MF
-%endif
 %if %{with bootstrap}
 %pom_xpath_replace "pom:modules" "<modules>
 <module>releng/features/org.eclipse.ecf.core.feature</module>
@@ -169,16 +157,6 @@ for J in ecf{,.identity,.ssl,.filetransfer,.provider.filetransfer{,.ssl,.httpcli
     [ -e "`ls $DIR/org.eclipse.${J}_*.jar`" ] && ln -s $DIR/org.eclipse.${J}_*.jar ${J}.jar
 done
 popd
-%if %{without bootstrap}
-%if %{with providers}
-pushd %{buildroot}%{_datadir}/eclipse/droplets/ecf-sdk/plugins/org.eclipse.ecf.provider.irc_*
-rm lib/irclib.jar && ln -s $(build-classpath irclib) lib/irclib.jar
-popd
-pushd %{buildroot}%{_datadir}/eclipse/droplets/ecf-runtime/plugins/org.jivesoftware.smack_*
-rm jars/xpp.jar && ln -s $(build-classpath xpp3-minimal) jars/xpp.jar
-popd
-%endif
-%endif
 
 %files core -f .mfiles
 %{_javadir}/eclipse/*
@@ -190,6 +168,9 @@ popd
 %endif
 
 %changelog
+* Thu Feb 4 2021 wutao <wutao61@huawei.com> - 3.14.4-3
+- remove irclib deps
+
 * Sat Dec 12 2020 caodongxia <caodongxia@huawei.com> - 3.14.4-2
 - Fix CVE-2014-0363.patch
 
