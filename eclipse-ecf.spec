@@ -1,16 +1,17 @@
 %global _eclipsedir %{_prefix}/lib/eclipse
 %global __requires_exclude .*org\.eclipse\.equinox.*
-%global git_tag 5d501929b628b6aa6d28b2f5df73fc45c0fa1945
+%global git_tag bc2e29e0d5cf49d05bd97dbb082d2ab58eedd13b 
 %bcond_with bootstrap
 Name:                eclipse-ecf
-Version:             3.14.4
-Release:             3
+Version:             3.14.19
+Release:             1
 Summary:             Eclipse Communication Framework (ECF) Eclipse plug-in
 License:             EPL-1.0 and ASL 2.0
 URL:                 http://www.eclipse.org/ecf/
 Source0:             http://git.eclipse.org/c/ecf/org.eclipse.ecf.git/snapshot/org.eclipse.ecf-%{git_tag}.tar.xz
-Patch0:              eclipse-ecf-feature-deps.patch
+Patch0:              0001-Avoid-hard-coding-dependency-versions-by-using-featu.patch
 Patch1:              CVE-2014-0363.patch
+Patch2:              0002-Remove-unneeded-dep-on-jdt-annotations.patch
 BuildRequires:       tycho tycho-extras maven-plugin-build-helper eclipse-license osgi-annotation
 BuildRequires:       xpp3-minimal httpcomponents-client httpcomponents-core apache-commons-codec
 BuildRequires:       apache-commons-logging
@@ -28,105 +29,54 @@ Summary:             Eclipse ECF Core
 Requires:            httpcomponents-client httpcomponents-core
 %description core
 ECF bundles required by eclipse-platform.
-%if %{without bootstrap}
-
-%package   runtime
-Summary:             Eclipse Communication Framework (ECF) Eclipse plug-in
-%description runtime
-ECF is a set of frameworks for building communications into applications and
-services. It provides a lightweight, modular, transport-independent, fully
-compliant implementation of the OSGi Remote Services standard.
-
-%package   sdk
-Summary:             Eclipse ECF SDK
-%description sdk
-Documentation and developer resources for the Eclipse Communication Framework
-(ECF) plug-in.
-%endif
+Requires:  httpcomponents-client
+Requires:  httpcomponents-core
+# Obsolete SDK and runtime packages since F33
+Obsoletes: %{name}-runtime < 3.14.17-3
+Obsoletes: %{name}-sdk < 3.14.17-3
 
 %prep
 %setup -q -n org.eclipse.ecf-%{git_tag}
 find . -type f -name "*.jar" -exec rm {} \;
 find . -type f -name "*.class" -exec rm {} \;
-%patch0
+%patch0 -p1
 %patch1 -p1
-%pom_xpath_remove "feature/plugin[@id='org.eclipse.ecf.presence']" releng/features/org.eclipse.ecf.core/feature.xml
-sed -i -e '/org.objectweb.asm/s/7/8/' protocols/bundles/ch.ethz.iks.r_osgi.remote/META-INF/MANIFEST.MF
-sed -i -e '/<module>examples/d' -e '/<module>tests/d' pom.xml
-%pom_disable_module releng/features/org.eclipse.ecf.tests.feature
-%pom_disable_module releng/features/org.eclipse.ecf.eventadmin.examples.feature
-%pom_disable_module releng/features/org.eclipse.ecf.remoteservice.examples.feature
-%pom_disable_module releng/features/org.eclipse.ecf.remoteservice.sdk.examples.feature
-%pom_xpath_remove "feature/requires/import[@feature='org.eclipse.ecf.remoteservice.sdk.examples.feature']" releng/features/org.eclipse.ecf.core/feature.xml
-%pom_xpath_remove "feature/plugin[@id='org.eclipse.ecf.example.clients']" releng/features/org.eclipse.ecf.core/feature.xml
-%pom_xpath_remove "feature/plugin[@id='org.eclipse.ecf.example.collab']" releng/features/org.eclipse.ecf.core/feature.xml
+%patch2 -p1
+
+# Requires Optional from Java 8
+sed -i -e 's/JavaSE-1.7/JavaSE-1.8/' providers/bundles/org.eclipse.ecf.provider.filetransfer.httpclient45/META-INF/MANIFEST.MF
+
+# Don't use target platform or jgit packaging bits
 %pom_xpath_remove "pom:target"
 %pom_xpath_remove "pom:plugin[pom:artifactId='tycho-packaging-plugin']/pom:dependencies"
 %pom_xpath_remove "pom:plugin[pom:artifactId='tycho-packaging-plugin']/pom:configuration/pom:sourceReferences"
 %pom_xpath_remove "pom:plugin[pom:artifactId='tycho-packaging-plugin']/pom:configuration/pom:timestampProvider"
 %pom_disable_module releng/org.eclipse.ecf.releng.repository
-%pom_xpath_remove "feature/requires/import[@plugin='org.json']" releng/features/org.eclipse.ecf.remoteservice.rest.feature/feature.xml
-%pom_disable_module releng/features/org.eclipse.ecf.discovery.zookeeper.feature
-%pom_disable_module providers/bundles/org.eclipse.ecf.provider.zookeeper
-%pom_xpath_remove "feature/includes[@id='org.eclipse.ecf.discovery.zookeeper.feature']" releng/features/org.eclipse.ecf.remoteservice.sdk.feature/feature.xml
-%pom_disable_module releng/features/org.eclipse.ecf.remoteservice.rest.synd.feature
-%pom_disable_module framework/bundles/org.eclipse.ecf.remoteservice.rest.synd
-%pom_disable_module releng/features/org.eclipse.ecf.discovery.slp.feature
-%pom_disable_module providers/bundles/org.eclipse.ecf.provider.jslp
-%pom_disable_module protocols/bundles/ch.ethz.iks.slp
-%pom_xpath_remove "feature/includes[@id='org.eclipse.ecf.discovery.slp.feature']" releng/features/org.eclipse.ecf.remoteservice.sdk.feature/feature.xml
-%pom_disable_module releng/features/org.eclipse.ecf.discovery.dnssd.feature
-%pom_disable_module providers/bundles/org.eclipse.ecf.provider.dnssd
-%pom_disable_module protocols/bundles/org.jivesoftware.smack
-%pom_disable_module providers/bundles/org.eclipse.ecf.provider.xmpp.datashare
-%pom_disable_module providers/bundles/org.eclipse.ecf.provider.xmpp
-%pom_disable_module providers/bundles/org.eclipse.ecf.provider.xmpp.remoteservice
-%pom_disable_module providers/bundles/org.eclipse.ecf.provider.xmpp.ui
-%pom_disable_module releng/features/org.eclipse.ecf.xmpp.feature
-%pom_xpath_remove "feature/plugin[@id='org.eclipse.ecf.provider.xmpp.ui']" releng/features/org.eclipse.ecf.core/feature.xml
-%pom_disable_module providers/bundles/org.eclipse.ecf.provider.irc
-%pom_disable_module providers/bundles/org.eclipse.ecf.provider.irc.ui
-%pom_xpath_remove "feature/plugin[@id='org.eclipse.ecf.provider.irc']" releng/features/org.eclipse.ecf.core/feature.xml
-%pom_xpath_remove "feature/plugin[@id='org.eclipse.ecf.provider.irc.ui']" releng/features/org.eclipse.ecf.core/feature.xml
-ln -s $(build-classpath osgi-annotation) osgi/bundles/org.eclipse.osgi.services.remoteserviceadmin/osgi/osgi.annotation.jar
-%if %{with bootstrap}
+
+# Don't build bundles that are not relevant to our platform
+%pom_disable_module providers/bundles/org.eclipse.ecf.provider.filetransfer.httpclient45.win32
+%pom_xpath_remove "feature/plugin[@os='win32']" releng/features/org.eclipse.ecf.filetransfer.httpclient45.feature/feature.xml
+
+# Only build core modules needed by Eclipse platform
 %pom_xpath_replace "pom:modules" "<modules>
 <module>releng/features/org.eclipse.ecf.core.feature</module>
 <module>releng/features/org.eclipse.ecf.core.ssl.feature</module>
 <module>releng/features/org.eclipse.ecf.filetransfer.feature</module>
-<module>releng/features/org.eclipse.ecf.filetransfer.httpclient4.feature</module>
-<module>releng/features/org.eclipse.ecf.filetransfer.httpclient4.ssl.feature</module>
+<module>releng/features/org.eclipse.ecf.filetransfer.httpclient45.feature</module>
 <module>releng/features/org.eclipse.ecf.filetransfer.ssl.feature</module>
 <module>framework/bundles/org.eclipse.ecf</module>
 <module>framework/bundles/org.eclipse.ecf.identity</module>
 <module>framework/bundles/org.eclipse.ecf.filetransfer</module>
 <module>framework/bundles/org.eclipse.ecf.ssl</module>
 <module>providers/bundles/org.eclipse.ecf.provider.filetransfer</module>
-<module>providers/bundles/org.eclipse.ecf.provider.filetransfer.httpclient4</module>
-<module>providers/bundles/org.eclipse.ecf.provider.filetransfer.httpclient4.ssl</module>
+<module>providers/bundles/org.eclipse.ecf.provider.filetransfer.httpclient45</module>
 <module>providers/bundles/org.eclipse.ecf.provider.filetransfer.ssl</module>
 </modules>"
-%endif
-sed -i -e '/Require-Bundle:/a\ org.eclipse.osgi.services,' framework/bundles/org.eclipse.ecf.console/META-INF/MANIFEST.MF
+
 %mvn_package "::{pom,target}::" __noinstall
-%if %{with bootstrap}
+
 %mvn_package "::jar:{sources,sources-feature}:" __noinstall
-%else
-%mvn_package "::jar:{sources,sources-feature}:" sdk
-%endif
-%mvn_package ":org.eclipse.ecf.{core,sdk}" sdk
-%mvn_package ":org.eclipse.ecf.docshare*" sdk
-for p in $(grep '<plugin' releng/features/org.eclipse.ecf.core/feature.xml | sed -e 's/.*id="\(.*\)" d.*/\1/') ; do
-%mvn_package ":$p" sdk
-done
-%mvn_package ":*.ui" sdk
-%mvn_package ":*.ui.*" sdk
-%mvn_package ":org.eclipse.ecf.remoteservice.sdk.*" sdk
-%mvn_package ":org.eclipse.ecf.core.{,ssl.}feature"
-%mvn_package ":org.eclipse.ecf.filetransfer.{,httpclient4.}{,ssl.}feature"
-%mvn_package ":org.eclipse.ecf{,.identity,.ssl,.filetransfer}"
-%mvn_package ":org.eclipse.ecf.provider.filetransfer*"
-%mvn_package ":" runtime
+%mvn_package ":"
 
 %build
 QUALIFIER=$(date -u -d"$(stat --format=%y %{SOURCE0})" +v%Y%m%d-%H%M)
@@ -160,14 +110,11 @@ popd
 
 %files core -f .mfiles
 %{_javadir}/eclipse/*
-%if %{without bootstrap}
-
-%files runtime -f .mfiles-runtime
-
-%files sdk -f .mfiles-sdk
-%endif
 
 %changelog
+* Tue Jan 18 2022 SimpleUpdate Robot <tc@openeuler.org> - 3.14.19-1
+- Upgrade to version 3.14.19
+
 * Thu Feb 4 2021 wutao <wutao61@huawei.com> - 3.14.4-3
 - remove irclib deps
 
