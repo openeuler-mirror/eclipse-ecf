@@ -4,7 +4,7 @@
 %bcond_with bootstrap
 Name:                eclipse-ecf
 Version:             3.14.19
-Release:             1
+Release:             2
 Summary:             Eclipse Communication Framework (ECF) Eclipse plug-in
 License:             EPL-1.0 and ASL 2.0
 URL:                 http://www.eclipse.org/ecf/
@@ -62,6 +62,8 @@ sed -i -e 's/JavaSE-1.7/JavaSE-1.8/' providers/bundles/org.eclipse.ecf.provider.
 <module>releng/features/org.eclipse.ecf.core.feature</module>
 <module>releng/features/org.eclipse.ecf.core.ssl.feature</module>
 <module>releng/features/org.eclipse.ecf.filetransfer.feature</module>
+<module>releng/features/org.eclipse.ecf.filetransfer.httpclient4.feature</module>
+<module>releng/features/org.eclipse.ecf.filetransfer.httpclient4.ssl.feature</module>
 <module>releng/features/org.eclipse.ecf.filetransfer.httpclient45.feature</module>
 <module>releng/features/org.eclipse.ecf.filetransfer.ssl.feature</module>
 <module>framework/bundles/org.eclipse.ecf</module>
@@ -69,6 +71,8 @@ sed -i -e 's/JavaSE-1.7/JavaSE-1.8/' providers/bundles/org.eclipse.ecf.provider.
 <module>framework/bundles/org.eclipse.ecf.filetransfer</module>
 <module>framework/bundles/org.eclipse.ecf.ssl</module>
 <module>providers/bundles/org.eclipse.ecf.provider.filetransfer</module>
+<module>providers/bundles/org.eclipse.ecf.provider.filetransfer.httpclient4</module>
+<module>providers/bundles/org.eclipse.ecf.provider.filetransfer.httpclient4.ssl</module>
 <module>providers/bundles/org.eclipse.ecf.provider.filetransfer.httpclient45</module>
 <module>providers/bundles/org.eclipse.ecf.provider.filetransfer.ssl</module>
 </modules>"
@@ -112,6 +116,9 @@ popd
 %{_javadir}/eclipse/*
 
 %changelog
+* Mon Mar 07 2022 xu_ping <tc@openeuler.org> - 3.14.19-2
+- add filetransfer.httpclient4 and filetransfer.httpclient4.ssl for tycho
+
 * Tue Jan 18 2022 SimpleUpdate Robot <tc@openeuler.org> - 3.14.19-1
 - Upgrade to version 3.14.19
 
